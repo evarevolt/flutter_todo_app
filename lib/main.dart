@@ -40,6 +40,20 @@ class _TodoListScreenState extends State<TodoListScreen> {
     }
   }
 
+  void _editTask(int index, String newText) {
+    if (newText.isNotEmpty) {
+      setState(() {
+        _tasks[index] = newText;
+      });
+    }
+  }
+
+  void _deleteTask(int index) {
+    setState(() {
+      _tasks.removeAt(index);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -65,6 +79,41 @@ class _TodoListScreenState extends State<TodoListScreen> {
               itemBuilder: (context, index) {
                 return ListTile(
                   title: Text(_tasks[index]),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _deleteTask(index),
+                  ),
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) {
+                        final editController =
+                            TextEditingController(text: _tasks[index]);
+                        return AlertDialog(
+                          title: const Text('Edit Task'),
+                          content: TextField(
+                            controller: editController,
+                            decoration: const InputDecoration(
+                              border: OutlineInputBorder(),
+                            ),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                _editTask(index, editController.text);
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Save'),
+                            ),
+                          ],
+                        );
+                      },
+                    );
+                  },
                 );
               },
             ),
