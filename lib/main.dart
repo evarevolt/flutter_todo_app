@@ -34,6 +34,7 @@ class TaskManagerScreen extends StatefulWidget {
 class _TaskManagerScreenState extends State<TaskManagerScreen> {
   List<Task> tasks = [];
   TextEditingController taskController = TextEditingController();
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   @override
   void initState() {
@@ -58,11 +59,13 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
   }
 
   void addTask() {
-    setState(() {
-      tasks.add(Task(taskController.text, false));
-      taskController.clear();
-      saveTasks();
-    });
+    if (_formKey.currentState!.validate()) {
+      setState(() {
+        tasks.add(Task(taskController.text, false));
+        taskController.clear();
+        saveTasks();
+      });
+    }
   }
 
   void editTask(int index) {
@@ -72,10 +75,19 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
       builder: (context) {
         return AlertDialog(
           title: Text('Edit Task'),
-          content: TextField(
-            controller: taskController,
-            decoration: InputDecoration(
-              labelText: 'Edit your task',
+          content: Form(
+            key: _formKey,
+            child: TextFormField(
+              controller: taskController,
+              decoration: InputDecoration(
+                labelText: 'Edit your task',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please enter a task';
+                }
+                return null;
+              },
             ),
           ),
           actions: [
@@ -88,12 +100,14 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
             TextButton(
               child: Text('Save'),
               onPressed: () {
-                setState(() {
-                  tasks[index].title = taskController.text;
-                  taskController.clear();
-                  saveTasks();
-                });
-                Navigator.of(context).pop();
+                if (_formKey.currentState!.validate()) {
+                  setState(() {
+                    tasks[index].title = taskController.text;
+                    taskController.clear();
+                    saveTasks();
+                  });
+                  Navigator.of(context).pop();
+                }
               },
             ),
           ],
@@ -131,26 +145,37 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: taskController,
-                    decoration: InputDecoration(
-                      labelText: 'Enter a task',
-                      border: OutlineInputBorder(),
+            child: Form(
+              key: _formKey,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: taskController,
+                      decoration: InputDecoration(
+                        labelText: 'Enter a task',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Please enter a task';
+                        }
+                        return null;
+                      },
                     ),
                   ),
-                ),
-                SizedBox(width: 8),
-                ElevatedButton(
-                  onPressed: addTask,
-                  child: Text('Add'),
-                  style: ElevatedButton.styleFrom(
-                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: addTask,
+                    icon: Icon(Icons.add), // Иконка добавления
+                    label: Text('Add'),
+                    style: ElevatedButton.styleFrom(
+                      padding:
+                          EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Expanded(
