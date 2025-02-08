@@ -18,13 +18,20 @@ class TaskManagerApp extends StatelessWidget {
   }
 }
 
+class Task {
+  String title;
+  bool isCompleted;
+
+  Task(this.title, this.isCompleted);
+}
+
 class TaskManagerScreen extends StatefulWidget {
   @override
   _TaskManagerScreenState createState() => _TaskManagerScreenState();
 }
 
 class _TaskManagerScreenState extends State<TaskManagerScreen> {
-  List<String> tasks = [];
+  List<Task> tasks = [];
   TextEditingController taskController = TextEditingController();
 
   @override
@@ -35,26 +42,30 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
 
   void loadTasks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      tasks = prefs.getStringList('tasks') ?? [];
-    });
+    List<String>? taskList = prefs.getStringList('tasks');
+    if (taskList != null) {
+      setState(() {
+        tasks = taskList.map((task) => Task(task, false)).toList();
+      });
+    }
   }
 
   void saveTasks() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    prefs.setStringList('tasks', tasks);
+    List<String> taskList = tasks.map((task) => task.title).toList();
+    prefs.setStringList('tasks', taskList);
   }
 
   void addTask() {
     setState(() {
-      tasks.add(taskController.text);
+      tasks.add(Task(taskController.text, false));
       taskController.clear();
       saveTasks();
     });
   }
 
   void editTask(int index) {
-    taskController.text = tasks[index];
+    taskController.text = tasks[index].title;
     showDialog(
       context: context,
       builder: (context) {
@@ -77,7 +88,7 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
               child: Text('Save'),
               onPressed: () {
                 setState(() {
-                  tasks[index] = taskController.text;
+                  tasks[index].title = taskController.text;
                   taskController.clear();
                   saveTasks();
                 });
@@ -93,6 +104,17 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
   void deleteTask(int index) {
     setState(() {
       tasks.removeAt(index);
+      saveTasks();
+    });
+  }
+
+  void toggleTaskCompletion(int index) {
+    setState(() {
+      tasks[index].isCompleted = !tasks[index].isCompleted;
+      if (tasks[index].isCompleted) {
+        Task task = tasks.removeAt(index);
+        tasks.add(task);
+      }
       saveTasks();
     });
   }
@@ -129,10 +151,26 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
               itemCount: tasks.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(tasks[index]),
-                  trailing: IconButton(
-                    icon: Icon(Icons.delete),
-                    onPressed: () => deleteTask(index),
+                  title: Text(
+                    tasks[index].title,
+                    style: TextStyle(
+                      decoration: tasks[index].isCompleted
+                          ? TextDecoration.lineThrough
+                          : TextDecoration.none,
+                    ),
+                  ),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Checkbox(
+                        value: tasks[index].isCompleted,
+                        onChanged: (value) => toggleTaskCompletion(index),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.delete),
+                        onPressed: () => deleteTask(index),
+                      ),
+                    ],
                   ),
                   onTap: () => editTask(index),
                 );
