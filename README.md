@@ -1,16 +1,53 @@
-# flutter_todo_app
+# Task Manager
 
-A new Flutter project.
+## Описание
+**Task Manager** — это простое Flutter-приложение для управления списком задач. Позволяет пользователю **добавлять, редактировать, удалять** и **помечать задачи как выполненные**.  
+Данные сохраняются с помощью `SharedPreferences`, что позволяет сохранять список задач между сессиями.
 
-## Getting Started
+## Возможности
 
-This project is a starting point for a Flutter application.
+- **Добавление задач**
+- **Редактирование задач**
+- **Удаление задач**
+- **Отметка выполнения задачи** (перемещение выполненных задач в конец списка)
+- **Сохранение данных** с использованием SharedPreferences
+- **Анимация добавления задач** в список
 
-A few resources to get you started if this is your first Flutter project:
+## Установка
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+1. Убедитесь, что у вас установлен Flutter.
+2. Клонируйте репозиторий:
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+   ```bash
+   git clone https://github.com/evarevolt/flutter_todo_app.git
+   cd flutter_todo_app
+   ```
+
+3. Установите зависимости:
+
+   ```bash
+   flutter pub get
+   ```
+
+4. Запустите приложение:
+
+   ```bash
+   flutter run
+   ```
+
+## Используемые зависимости
+
+- `flutter/material.dart` — основной UI-фреймворк.
+- `shared_preferences` — для локального хранения списка задач.
+
+## Структура проекта
+
+```bash
+lib/
+├── main.dart         # Основной файл приложения
+```
+
+## Автор
+
+Pavel Borodin
+
