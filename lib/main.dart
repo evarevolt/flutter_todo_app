@@ -1,56 +1,99 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  runApp(const TodoApp());
+  runApp(TaskManagerApp());
 }
 
-class TodoApp extends StatelessWidget {
-  const TodoApp({super.key});
-
+class TaskManagerApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Todo App',
+      title: 'Task Manager',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
+        primarySwatch: Colors.blue,
       ),
-      home: const TodoListScreen(),
+      home: TaskManagerScreen(),
     );
   }
 }
 
-class TodoListScreen extends StatefulWidget {
-  const TodoListScreen({super.key});
-
+class TaskManagerScreen extends StatefulWidget {
   @override
-  State<TodoListScreen> createState() => _TodoListScreenState();
+  _TaskManagerScreenState createState() => _TaskManagerScreenState();
 }
 
-class _TodoListScreenState extends State<TodoListScreen> {
-  final List<String> _tasks = [];
-  final TextEditingController _taskController = TextEditingController();
+class _TaskManagerScreenState extends State<TaskManagerScreen> {
+  List<String> tasks = [];
+  TextEditingController taskController = TextEditingController();
 
-  void _addTask() {
-    if (_taskController.text.isNotEmpty) {
-      setState(() {
-        _tasks.add(_taskController.text);
-        _taskController.clear();
-      });
-    }
+  @override
+  void initState() {
+    super.initState();
+    loadTasks();
   }
 
-  void _editTask(int index, String newText) {
-    if (newText.isNotEmpty) {
-      setState(() {
-        _tasks[index] = newText;
-      });
-    }
-  }
-
-  void _deleteTask(int index) {
+  void loadTasks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
     setState(() {
-      _tasks.removeAt(index);
+      tasks = prefs.getStringList('tasks') ?? [];
+    });
+  }
+
+  void saveTasks() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setStringList('tasks', tasks);
+  }
+
+  void addTask() {
+    setState(() {
+      tasks.add(taskController.text);
+      taskController.clear();
+      saveTasks();
+    });
+  }
+
+  void editTask(int index) {
+    taskController.text = tasks[index];
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Task'),
+          content: TextField(
+            controller: taskController,
+            decoration: InputDecoration(
+              labelText: 'Edit your task',
+            ),
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Save'),
+              onPressed: () {
+                setState(() {
+                  tasks[index] = taskController.text;
+                  taskController.clear();
+                  saveTasks();
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void deleteTask(int index) {
+    setState(() {
+      tasks.removeAt(index);
+      saveTasks();
     });
   }
 
@@ -58,72 +101,45 @@ class _TodoListScreenState extends State<TodoListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Todo List'),
+        title: Text('Task Manager'),
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: TextField(
-              controller: _taskController,
-              decoration: const InputDecoration(
-                labelText: 'Enter new task',
-                border: OutlineInputBorder(),
-              ),
-              onSubmitted: (_) => _addTask(),
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: taskController,
+                    decoration: InputDecoration(
+                      labelText: 'Enter a task',
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(Icons.add),
+                  onPressed: addTask,
+                ),
+              ],
             ),
           ),
           Expanded(
             child: ListView.builder(
-              itemCount: _tasks.length,
+              itemCount: tasks.length,
               itemBuilder: (context, index) {
                 return ListTile(
-                  title: Text(_tasks[index]),
+                  title: Text(tasks[index]),
                   trailing: IconButton(
-                    icon: const Icon(Icons.delete),
-                    onPressed: () => _deleteTask(index),
+                    icon: Icon(Icons.delete),
+                    onPressed: () => deleteTask(index),
                   ),
-                  onTap: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) {
-                        final editController =
-                            TextEditingController(text: _tasks[index]);
-                        return AlertDialog(
-                          title: const Text('Edit Task'),
-                          content: TextField(
-                            controller: editController,
-                            decoration: const InputDecoration(
-                              border: OutlineInputBorder(),
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () {
-                                _editTask(index, editController.text);
-                                Navigator.pop(context);
-                              },
-                              child: const Text('Save'),
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
+                  onTap: () => editTask(index),
                 );
               },
             ),
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _addTask,
-        tooltip: 'Add Task',
-        child: const Icon(Icons.add),
       ),
     );
   }
