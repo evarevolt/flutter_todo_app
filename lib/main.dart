@@ -12,6 +12,7 @@ class TaskManagerApp extends StatelessWidget {
       title: 'Task Manager',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: TaskManagerScreen(),
     );
@@ -124,11 +125,12 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Task Manager'),
+        centerTitle: true,
       ),
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(8.0),
+            padding: const EdgeInsets.all(16.0),
             child: Row(
               children: [
                 Expanded(
@@ -136,43 +138,58 @@ class _TaskManagerScreenState extends State<TaskManagerScreen> {
                     controller: taskController,
                     decoration: InputDecoration(
                       labelText: 'Enter a task',
+                      border: OutlineInputBorder(),
                     ),
                   ),
                 ),
-                IconButton(
-                  icon: Icon(Icons.add),
+                SizedBox(width: 8),
+                ElevatedButton(
                   onPressed: addTask,
+                  child: Text('Add'),
+                  style: ElevatedButton.styleFrom(
+                    padding: EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                  ),
                 ),
               ],
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text(
-                    tasks[index].title,
-                    style: TextStyle(
-                      decoration: tasks[index].isCompleted
-                          ? TextDecoration.lineThrough
-                          : TextDecoration.none,
+            child: AnimatedList(
+              key: UniqueKey(),
+              initialItemCount: tasks.length,
+              itemBuilder: (context, index, animation) {
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(-1, 0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeInOut,
+                  )),
+                  child: ListTile(
+                    title: Text(
+                      tasks[index].title,
+                      style: TextStyle(
+                        decoration: tasks[index].isCompleted
+                            ? TextDecoration.lineThrough
+                            : TextDecoration.none,
+                      ),
                     ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Checkbox(
+                          value: tasks[index].isCompleted,
+                          onChanged: (value) => toggleTaskCompletion(index),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () => deleteTask(index),
+                        ),
+                      ],
+                    ),
+                    onTap: () => editTask(index),
                   ),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Checkbox(
-                        value: tasks[index].isCompleted,
-                        onChanged: (value) => toggleTaskCompletion(index),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () => deleteTask(index),
-                      ),
-                    ],
-                  ),
-                  onTap: () => editTask(index),
                 );
               },
             ),
